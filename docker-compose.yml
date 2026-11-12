@@ -1,0 +1,42 @@
+﻿services:
+  catalog_mysql:
+    image: mysql:8.0
+    container_name: shopease_catalog_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: shopease_product_catalog_db
+      MYSQL_USER: shopease_catalog_user
+      MYSQL_PASSWORD: catalog_secure_password_2026
+    ports:
+      - "3311:3306"
+    volumes:
+      - catalog_mysql_data:/var/lib/mysql
+    networks:
+      - catalog_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  catalog_service:
+    build: .
+    container_name: shopease_catalog_container
+    restart: always
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    networks:
+      - catalog_net
+    depends_on:
+      catalog_mysql:
+        condition: service_healthy
+
+volumes:
+  catalog_mysql_data:
+
+networks:
+  catalog_net:
+    driver: bridge
